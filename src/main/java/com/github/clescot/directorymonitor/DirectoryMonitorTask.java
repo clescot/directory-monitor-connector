@@ -1,6 +1,7 @@
 package com.github.clescot.directorymonitor;
 
 import com.google.common.collect.Lists;
+import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
@@ -96,7 +97,7 @@ public class DirectoryMonitorTask extends SourceTask {
                     continue;
                 }
                 if(isWatched(pathMatcher, kinds, ev)){
-                    //TODO put into kafka
+                    records.add(extractSourceRecord(ev));
                 }
                 logger.debug(kind.name() + ": " + path);
 
@@ -109,6 +110,16 @@ public class DirectoryMonitorTask extends SourceTask {
             }
         }
         return null;
+    }
+
+    private SourceRecord extractSourceRecord(WatchEvent<Path> event) {
+        Map<String, ?> sourcePartition = null;
+        Map<String, ?> sourceOffset = null;
+        String topic = null;
+        Integer partition = null;
+        Schema valueSchema = null;
+        Object value = null;
+        return new SourceRecord(sourcePartition,sourceOffset,topic,partition,valueSchema,value);
     }
 
     private boolean isWatched(PathMatcher pathMatcher, WatchEvent.Kind<Path>[] kindsWanted, WatchEvent<Path> event) {
