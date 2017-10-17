@@ -26,9 +26,10 @@ public class DirectoryMonitorTask extends SourceTask {
     public static final String PREFIX = "prefix";
     public static final String PATHMATCHER = "pathmatcher";
     public static final String KINDS = "kinds";
-    public static final String C = "C";
-    public static final String D = "D";
-    public static final String M = "M";
+    public static final String CREATE_EVENT = "CREATE_EVENT";
+    public static final String DELETE_EVENT = "DELETE_EVENT";
+    public static final String MODIFY_EVENT = "MODIFY_EVENT";
+    public static final String ALL_KINDS = "CDM";
     private WatchService watchService;
     private AtomicBoolean stop;
     private WatchKey watchKey;
@@ -67,16 +68,16 @@ public class DirectoryMonitorTask extends SourceTask {
     private WatchEvent.Kind[] getKinds(String kinds){
         String attributes = kinds;
         if(kinds==null||kinds.isEmpty()){
-            attributes="CDM";
+            attributes= ALL_KINDS;
         }
         List<WatchEvent.Kind> list = Lists.newArrayList();
-        if(attributes.contains(C)){
+        if(attributes.contains(CREATE_EVENT)){
             list.add(ENTRY_CREATE);
         }
-        if(attributes.contains(D)){
+        if(attributes.contains(DELETE_EVENT)){
             list.add(ENTRY_DELETE);
         }
-        if(attributes.contains(M)){
+        if(attributes.contains(MODIFY_EVENT)){
             list.add(ENTRY_MODIFY);
         }
         return list.toArray(new WatchEvent.Kind[list.size()]);
