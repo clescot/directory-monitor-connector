@@ -34,7 +34,8 @@ public class DirectoryMonitorTask extends SourceTask {
     private WatchKey watchKey;
     private PathMatcher pathMatcher;
     private WatchEvent.Kind[] kinds;
-    String topicPrefix;
+    private String topicPrefix;
+    private String directoryPath;
     @Override
     public String version() {
         return null;
@@ -48,7 +49,7 @@ public class DirectoryMonitorTask extends SourceTask {
         try {
             final FileSystem fileSystem = FileSystems.getDefault();
             watchService = fileSystem.newWatchService();
-            final String directoryPath = map.get(DIRECTORY);
+            directoryPath = map.get(DIRECTORY);
             Path path = Paths.get(directoryPath);
             pathMatcher = fileSystem.getPathMatcher(map.get(PATHMATCHER));
             String kindsAsString = map.get(KINDS);
@@ -137,10 +138,9 @@ public class DirectoryMonitorTask extends SourceTask {
         final long lastModified = event.context().toFile().lastModified();
         final long mySourceOffset = lastModified != 0 ? lastModified : System.currentTimeMillis();
         Map<String, ?> sourceOffset = Collections.singletonMap(POSITION, mySourceOffset);
-        String topic = null;//TODO
-        Integer partition = null;//TODO
+        String topic = topicPrefix+directoryPath;
         Object value = uri+";;"+event.kind().name()+";;"+mySourceOffset;
-        return new SourceRecord(sourcePartition,sourceOffset,topic,partition,Schema.STRING_SCHEMA,value);
+        return new SourceRecord(sourcePartition,sourceOffset,topic,Schema.STRING_SCHEMA,value);
     }
 
     private boolean isWatched(PathMatcher pathMatcher, WatchEvent.Kind<Path>[] kindsWanted, WatchEvent<Path> event) {
