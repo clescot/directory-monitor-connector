@@ -10,22 +10,31 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.sql.Timestamp;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.nio.file.StandardWatchEventKinds.*;
+import static java.time.Instant.EPOCH;
 
 public class DirectoryMonitorTask extends SourceTask {
 
     private static final Logger logger = LoggerFactory.getLogger(DirectoryMonitorTask.class);
+    public static final String POSITION = "position";
+    public static final String FILE = "file";
+    public static final String DIRECTORY = "directory";
+    public static final String PREFIX = "prefix";
+    public static final String PATHMATCHER = "pathmatcher";
+    public static final String KINDS = "kinds";
+    public static final String C = "C";
+    public static final String D = "D";
+    public static final String M = "M";
     private WatchService watchService;
     private AtomicBoolean stop;
     private WatchKey watchKey;
     private PathMatcher pathMatcher;
     private WatchEvent.Kind[] kinds;
+    String topicPrefix;
     @Override
     public String version() {
         return null;
@@ -33,15 +42,16 @@ public class DirectoryMonitorTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> map) {
+        topicPrefix = map.get(PREFIX);
         Map<Map<String, String>, Map<String, Object>> offsets = null;
         List<Map<String, String>> partitions = new ArrayList<>();
         try {
             final FileSystem fileSystem = FileSystems.getDefault();
             watchService = fileSystem.newWatchService();
-            final String directoryPath = map.get("directory");
+            final String directoryPath = map.get(DIRECTORY);
             Path path = Paths.get(directoryPath);
-            pathMatcher = fileSystem.getPathMatcher(map.get("pathmatcher"));
-            String kindsAsString = map.get("kinds");
+            pathMatcher = fileSystem.getPathMatcher(map.get(PATHMATCHER));
+            String kindsAsString = map.get(KINDS);
             kinds = getKinds(kindsAsString);
             //we get a watchKey for the directory with the watchService
             watchKey = path.register(watchService, kinds);
@@ -59,13 +69,13 @@ public class DirectoryMonitorTask extends SourceTask {
             attributes="CDM";
         }
         List<WatchEvent.Kind> list = Lists.newArrayList();
-        if(attributes.contains("C")){
+        if(attributes.contains(C)){
             list.add(ENTRY_CREATE);
         }
-        if(attributes.contains("D")){
+        if(attributes.contains(D)){
             list.add(ENTRY_DELETE);
         }
-        if(attributes.contains("M")){
+        if(attributes.contains(M)){
             list.add(ENTRY_MODIFY);
         }
         return list.toArray(new WatchEvent.Kind[list.size()]);
@@ -112,14 +122,25 @@ public class DirectoryMonitorTask extends SourceTask {
         return null;
     }
 
+    private Timestamp getLastRecordedOffset(Map<String,Object> partition) {
+        Map<String,Object> offset = context.offsetStorageReader().offset(partition);
+        Timestamp lastRecordedOffset = Timestamp.from(EPOCH);
+        if(offset !=null){
+            lastRecordedOffset = new Timestamp((Long)offset.getOrDefault(POSITION,Timestamp.from(EPOCH)));
+        }
+        return lastRecordedOffset;
+    }
+
     private SourceRecord extractSourceRecord(WatchEvent<Path> event) {
-        Map<String, ?> sourcePartition = null;
-        Map<String, ?> sourceOffset = null;
-        String topic = null;
-        Integer partition = null;
-        Schema valueSchema = null;
-        Object value = null;
-        return new SourceRecord(sourcePartition,sourceOffset,topic,partition,valueSchema,value);
+        final String uri = event.context().toUri().toString();
+        Map<String, ?> sourcePartition = Collections.singletonMap(FILE, uri);
+        final long lastModified = event.context().toFile().lastModified();
+        final long mySourceOffset = lastModified != 0 ? lastModified : System.currentTimeMillis();
+        Map<String, ?> sourceOffset = Collections.singletonMap(POSITION, mySourceOffset);
+        String topic = null;//TODO
+        Integer partition = null;//TODO
+        Object value = uri+";;"+event.kind().name()+";;"+mySourceOffset;
+        return new SourceRecord(sourcePartition,sourceOffset,topic,partition,Schema.STRING_SCHEMA,value);
     }
 
     private boolean isWatched(PathMatcher pathMatcher, WatchEvent.Kind<Path>[] kindsWanted, WatchEvent<Path> event) {
