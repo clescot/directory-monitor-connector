@@ -14,18 +14,14 @@ import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.github.clescot.directorymonitor.DirectoryMonitorTaskConfig.*;
 import static java.nio.file.StandardWatchEventKinds.*;
 import static java.time.Instant.EPOCH;
 
 public class DirectoryMonitorTask extends SourceTask {
 
     private static final Logger logger = LoggerFactory.getLogger(DirectoryMonitorTask.class);
-    public static final String POSITION = "position";
-    public static final String FILE = "file";
-    public static final String DIRECTORY = "directory";
-    public static final String PREFIX = "prefix";
-    public static final String PATHMATCHER = "pathmatcher";
-    public static final String KINDS = "kinds";
+
     public static final String CREATE_EVENT = "CREATE_EVENT";
     public static final String DELETE_EVENT = "DELETE_EVENT";
     public static final String MODIFY_EVENT = "MODIFY_EVENT";
@@ -44,16 +40,17 @@ public class DirectoryMonitorTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> map) {
+        DirectoryMonitorTaskConfig config = new DirectoryMonitorTaskConfig(map);
         topicPrefix = map.get(PREFIX);
         Map<Map<String, String>, Map<String, Object>> offsets = null;
         List<Map<String, String>> partitions = new ArrayList<>();
         try {
             final FileSystem fileSystem = FileSystems.getDefault();
             watchService = fileSystem.newWatchService();
-            directoryPath = map.get(DIRECTORY);
+            directoryPath = config.getString(DIRECTORY);
             Path path = Paths.get(directoryPath);
-            pathMatcher = fileSystem.getPathMatcher(map.get(PATHMATCHER));
-            String kindsAsString = map.get(KINDS);
+            pathMatcher = fileSystem.getPathMatcher(config.getString(PATHMATCHER));
+            String kindsAsString = config.getString(KINDS);
             kinds = getKinds(kindsAsString);
             //we get a watchKey for the directory with the watchService
             watchKey = path.register(watchService, kinds);
