@@ -22,9 +22,9 @@ public class DirectoryMonitorTask extends SourceTask {
 
     private static final Logger logger = LoggerFactory.getLogger(DirectoryMonitorTask.class);
 
-    public static final String CREATE_EVENT = "CREATE_EVENT";
-    public static final String DELETE_EVENT = "DELETE_EVENT";
-    public static final String MODIFY_EVENT = "MODIFY_EVENT";
+    public static final String CREATE_EVENT = "C";
+    public static final String DELETE_EVENT = "D";
+    public static final String MODIFY_EVENT = "M";
     public static final String ALL_KINDS = "CDM";
     private WatchService watchService;
     private AtomicBoolean stop;
@@ -40,6 +40,9 @@ public class DirectoryMonitorTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> map) {
+        if(context==null){
+            throw new IllegalStateException("sourceTaskContext is null");
+        }
         DirectoryMonitorTaskConfig config = new DirectoryMonitorTaskConfig(map);
         topicPrefix = map.get(PREFIX);
         Map<Map<String, String>, Map<String, Object>> offsets = null;
@@ -49,7 +52,8 @@ public class DirectoryMonitorTask extends SourceTask {
             watchService = fileSystem.newWatchService();
             directoryPath = config.getString(DIRECTORY);
             Path path = Paths.get(directoryPath);
-            pathMatcher = fileSystem.getPathMatcher(config.getString(PATHMATCHER));
+            final String pathMatcherAsString = "glob:"+directoryPath + "/" + config.getString(PATH_MATCHER);
+            pathMatcher = fileSystem.getPathMatcher(pathMatcherAsString);
             String kindsAsString = config.getString(KINDS);
             kinds = getKinds(kindsAsString);
             //we get a watchKey for the directory with the watchService
@@ -57,6 +61,7 @@ public class DirectoryMonitorTask extends SourceTask {
         } catch (IOException e) {
             throw new ConnectException("watchService cannot be created",e);
         }
+
         offsets = context.offsetStorageReader().offsets(partitions);
         stop = new AtomicBoolean(false);
     }
