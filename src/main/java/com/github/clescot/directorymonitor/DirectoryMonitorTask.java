@@ -86,6 +86,10 @@ public class DirectoryMonitorTask extends SourceTask {
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
 
+        return getSourceRecords(watchService, pathMatcher, kinds, stop);
+    }
+
+    protected List<SourceRecord> getSourceRecords(WatchService watchService, PathMatcher pathMatcher, WatchEvent.Kind[] kinds, AtomicBoolean stop) {
         List<SourceRecord> records = Lists.newArrayList();
 
         while (!stop.get()) {
@@ -133,7 +137,7 @@ public class DirectoryMonitorTask extends SourceTask {
         return lastRecordedOffset;
     }
 
-    private SourceRecord extractSourceRecord(WatchEvent<Path> event) {
+    protected SourceRecord extractSourceRecord(WatchEvent<Path> event) {
         final String uri = event.context().toUri().toString();
         Map<String, ?> sourcePartition = Collections.singletonMap(FILE, uri);
         final long lastModified = event.context().toFile().lastModified();
@@ -144,11 +148,12 @@ public class DirectoryMonitorTask extends SourceTask {
         return new SourceRecord(sourcePartition,sourceOffset,topic,Schema.STRING_SCHEMA,value);
     }
 
-    private boolean isWatched(PathMatcher pathMatcher, WatchEvent.Kind<Path>[] kindsWanted, WatchEvent<Path> event) {
+    protected boolean isWatched(PathMatcher pathMatcher, WatchEvent.Kind<Path>[] kindsWanted, WatchEvent<Path> event) {
         final Path context = event.context();
         final WatchEvent.Kind<Path> kind = event.kind();
 //        final int count = event.count();
         final long lastModified = context.toFile().lastModified();
+
         if(!pathMatcher.matches(context)){
             return false;
         }
