@@ -98,6 +98,7 @@ public class DirectoryMonitorTask extends SourceTask {
             WatchKey key;
             try {
                 // wait for a key to be available
+                logger.debug("waiting for a key to be available for directory {}",directoryPath);
                 key = watchService.take();
             } catch (InterruptedException ex) {
                 return records;
@@ -157,9 +158,11 @@ public class DirectoryMonitorTask extends SourceTask {
         final long lastModified = context.toFile().lastModified();
 
         if(!pathMatcher.matches(context)){
+            logger.debug("file {} does not match pathMatcher",context.toFile().getAbsolutePath());
             return false;
         }
         if(!Arrays.asList(kindsWanted).contains(kind)){
+            logger.debug("file {} does not match kindsWanted {}",context.toFile().getAbsolutePath(),kindsWanted);
            return false;
         }
         return true;
