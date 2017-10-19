@@ -33,6 +33,7 @@ public class DirectoryMonitorTask extends SourceTask {
     private WatchEvent.Kind[] kinds;
     private String topicPrefix;
     private String directoryPath;
+
     @Override
     public String version() {
         return null;
@@ -40,7 +41,7 @@ public class DirectoryMonitorTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> map) {
-        if(context==null){
+        if (context == null) {
             throw new IllegalStateException("sourceTaskContext is null");
         }
         DirectoryMonitorTaskConfig config = new DirectoryMonitorTaskConfig(map);
@@ -52,14 +53,14 @@ public class DirectoryMonitorTask extends SourceTask {
             watchService = fileSystem.newWatchService();
             directoryPath = config.getString(DIRECTORY);
             Path path = Paths.get(directoryPath);
-            final String pathMatcherAsString = "glob:"+directoryPath + "/" + config.getString(PATH_MATCHER);
+            final String pathMatcherAsString = config.getString(PATH_MATCHER);
             pathMatcher = fileSystem.getPathMatcher(pathMatcherAsString);
             String kindsAsString = config.getString(KINDS);
             kinds = getKinds(kindsAsString);
             //we get a watchKey for the directory with the watchService
             watchKey = path.register(watchService, kinds);
         } catch (IOException e) {
-            throw new ConnectException("watchService cannot be created",e);
+            throw new ConnectException("watchService cannot be created", e);
         }
 
         offsets = context.offsetStorageReader().offsets(partitions);
@@ -67,19 +68,19 @@ public class DirectoryMonitorTask extends SourceTask {
     }
 
 
-    private WatchEvent.Kind[] getKinds(String kinds){
+    private WatchEvent.Kind[] getKinds(String kinds) {
         String attributes = kinds;
-        if(kinds==null||kinds.isEmpty()){
-            attributes= ALL_KINDS;
+        if (kinds == null || kinds.isEmpty()) {
+            attributes = ALL_KINDS;
         }
         List<WatchEvent.Kind> list = Lists.newArrayList();
-        if(attributes.contains(CREATE_EVENT)){
+        if (attributes.contains(CREATE_EVENT)) {
             list.add(ENTRY_CREATE);
         }
-        if(attributes.contains(DELETE_EVENT)){
+        if (attributes.contains(DELETE_EVENT)) {
             list.add(ENTRY_DELETE);
         }
-        if(attributes.contains(MODIFY_EVENT)){
+        if (attributes.contains(MODIFY_EVENT)) {
             list.add(ENTRY_MODIFY);
         }
         return list.toArray(new WatchEvent.Kind[list.size()]);
@@ -98,7 +99,7 @@ public class DirectoryMonitorTask extends SourceTask {
             WatchKey key;
             try {
                 // wait for a key to be available
-                logger.debug("waiting for a key to be available for directory {}",directoryPath);
+                logger.debug("waiting for a key to be available for directory {}", directoryPath);
                 key = watchService.take();
             } catch (InterruptedException ex) {
                 return records;
@@ -115,7 +116,7 @@ public class DirectoryMonitorTask extends SourceTask {
                 if (kind == OVERFLOW) {
                     continue;
                 }
-                if(isWatched(pathMatcher, kinds, ev)){
+                if (isWatched(pathMatcher, kinds, ev)) {
                     records.add(extractSourceRecord(ev));
                 }
                 logger.debug(kind.name() + ": " + path);
@@ -131,11 +132,11 @@ public class DirectoryMonitorTask extends SourceTask {
         return null;
     }
 
-    private Timestamp getLastRecordedOffset(Map<String,Object> partition) {
-        Map<String,Object> offset = context.offsetStorageReader().offset(partition);
+    private Timestamp getLastRecordedOffset(Map<String, Object> partition) {
+        Map<String, Object> offset = context.offsetStorageReader().offset(partition);
         Timestamp lastRecordedOffset = Timestamp.from(EPOCH);
-        if(offset !=null){
-            lastRecordedOffset = new Timestamp((Long)offset.getOrDefault(POSITION,Timestamp.from(EPOCH)));
+        if (offset != null) {
+            lastRecordedOffset = new Timestamp((Long) offset.getOrDefault(POSITION, Timestamp.from(EPOCH)));
         }
         return lastRecordedOffset;
     }
@@ -146,9 +147,9 @@ public class DirectoryMonitorTask extends SourceTask {
         final long lastModified = event.context().toFile().lastModified();
         final long mySourceOffset = lastModified != 0 ? lastModified : System.currentTimeMillis();
         Map<String, ?> sourceOffset = Collections.singletonMap(POSITION, mySourceOffset);
-        String topic = topicPrefix+directoryPath;
-        Object value = uri+";;"+event.kind().name()+";;"+mySourceOffset;
-        return new SourceRecord(sourcePartition,sourceOffset,topic,Schema.STRING_SCHEMA,value);
+        String topic = topicPrefix + directoryPath;
+        Object value = uri + ";;" + event.kind().name() + ";;" + mySourceOffset;
+        return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, value);
     }
 
     protected boolean isWatched(PathMatcher pathMatcher, WatchEvent.Kind<Path>[] kindsWanted, WatchEvent<Path> event) {
@@ -157,13 +158,13 @@ public class DirectoryMonitorTask extends SourceTask {
 //        final int count = event.count();
         final long lastModified = context.toFile().lastModified();
 
-        if(!pathMatcher.matches(context)){
-            logger.debug("file {} does not match pathMatcher",context.toFile().getAbsolutePath());
+        if (!pathMatcher.matches(context)) {
+            logger.debug("file {} does not match pathMatcher", context.toFile().getAbsolutePath());
             return false;
         }
-        if(!Arrays.asList(kindsWanted).contains(kind)){
-            logger.debug("file {} does not match kindsWanted {}",context.toFile().getAbsolutePath(),kindsWanted);
-           return false;
+        if (!Arrays.asList(kindsWanted).contains(kind)) {
+            logger.debug("file {} does not match kindsWanted {}", context.toFile().getAbsolutePath(), kindsWanted);
+            return false;
         }
         return true;
     }

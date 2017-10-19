@@ -22,6 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyMapOf;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -65,7 +66,7 @@ public class DirectoryMonitorTaskTest {
         final HashMap<String, String> map = Maps.newHashMap();
         final File tempDir = Files.createTempDir();
         map.put(DirectoryMonitorTaskConfig.DIRECTORY,tempDir.getAbsolutePath());
-        map.put(DirectoryMonitorTaskConfig.PATH_MATCHER,"*");
+        map.put(DirectoryMonitorTaskConfig.PATH_MATCHER,"regex:.*\\.txt");
         map.put(DirectoryMonitorTaskConfig.KINDS,"CMD");
         return map;
     }
@@ -99,6 +100,7 @@ public class DirectoryMonitorTaskTest {
                 }
             }, 1, 2, TimeUnit.SECONDS);
             final List<SourceRecord> sourceRecords = task.poll();
+            assertThat(sourceRecords.size()).isEqualTo(1);
 
         }
     }
