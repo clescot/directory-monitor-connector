@@ -20,7 +20,7 @@ public class DirectoryMonitorConnectorConfig extends AbstractConfig {
     public static ConfigDef baseConfigDef() {
         ConfigDef config = new ConfigDef();
         return config//
-                .define(DIRECTORIES, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, DIRECTORIES_DOC);
+                .define(DIRECTORIES, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH, DIRECTORIES_DOC);
     }
 
 }

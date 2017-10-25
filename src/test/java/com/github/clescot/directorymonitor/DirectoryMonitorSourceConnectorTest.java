@@ -8,8 +8,6 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import static com.github.clescot.directorymonitor.DirectoryMonitorConnectorConfig.DIRECTORIES;
 
@@ -43,7 +41,34 @@ public class DirectoryMonitorSourceConnectorTest {
         @Test(expected = IllegalArgumentException.class)
         public void test_zero(){
             DirectoryMonitorSourceConnector connector= new DirectoryMonitorSourceConnector();
-            final List<Map<String, String>> maps = connector.taskConfigs(0);
+            final HashMap<String, String> properties = Maps.newHashMap();
+            properties.put(DIRECTORIES, Files.createTempDir().getAbsolutePath());
+            connector.start(properties);
+            connector.taskConfigs(0);
+        }
+
+        @Test(expected = IllegalArgumentException.class)
+        public void test_negative(){
+            DirectoryMonitorSourceConnector connector= new DirectoryMonitorSourceConnector();
+            final HashMap<String, String> properties = Maps.newHashMap();
+            properties.put(DIRECTORIES, Files.createTempDir().getAbsolutePath());
+            connector.start(properties);
+            connector.taskConfigs(-1);
+        }
+
+        @Test(expected = IllegalStateException.class)
+        public void test_task_configs_without_call_start_before(){
+            DirectoryMonitorSourceConnector connector= new DirectoryMonitorSourceConnector();
+            connector.taskConfigs(5);
+        }
+
+        @Test
+        public void test_nominal(){
+            DirectoryMonitorSourceConnector connector= new DirectoryMonitorSourceConnector();
+            final HashMap<String, String> properties = Maps.newHashMap();
+            properties.put(DIRECTORIES, Files.createTempDir().getAbsolutePath());
+            connector.start(properties);
+            connector.taskConfigs(5);
         }
 
     }

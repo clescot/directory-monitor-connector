@@ -6,10 +6,7 @@ import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.source.SourceConnector;
 import org.apache.kafka.connect.util.ConnectorUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DirectoryMonitorSourceConnector extends SourceConnector {
 
@@ -38,10 +35,17 @@ public class DirectoryMonitorSourceConnector extends SourceConnector {
 
     @Override
     public List<Map<String, String>> taskConfigs(int maxTasks) {
-            if(maxTasks<=0){
-                throw new IllegalArgumentException("maxTasks need to be positive");
-            }
-            List<String> directories = config.getList(DirectoryMonitorConnectorConfig.DIRECTORIES);
+        if(config==null){
+            throw new IllegalStateException("config is null. start method need to be called before taskConfigs");
+        }
+        if(maxTasks<=0){
+            throw new IllegalArgumentException("maxTasks need to be positive");
+        }
+        final Optional<String> directoriesConfig = Optional.ofNullable(config.getString(DirectoryMonitorConnectorConfig.DIRECTORIES));
+        if(!directoriesConfig.isPresent()){
+            throw new IllegalArgumentException(DirectoryMonitorConnectorConfig.DIRECTORIES +"parameter is required");
+        }
+        List<String> directories = Arrays.asList((directoriesConfig.get()).split(";"));
             int numGroups = Math.min(directories.size(), maxTasks);
             List<List<String>> diretoriesGrouped = ConnectorUtils.groupPartitions(directories, numGroups);
             List<Map<String, String>> taskConfigs = new ArrayList<>(diretoriesGrouped.size());
