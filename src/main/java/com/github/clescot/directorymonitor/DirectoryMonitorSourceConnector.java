@@ -2,9 +2,7 @@ package com.github.clescot.directorymonitor;
 
 import com.sun.deploy.util.StringUtils;
 import org.apache.kafka.common.config.ConfigDef;
-import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.connect.connector.Task;
-import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.source.SourceConnector;
 import org.apache.kafka.connect.util.ConnectorUtils;
 
@@ -26,14 +24,11 @@ public class DirectoryMonitorSourceConnector extends SourceConnector {
 
     @Override
     public void start(Map<String, String> properties) {
-        try {
+        if(properties==null) {
+          throw new IllegalArgumentException("properties cannot be null");
+        }
             configProperties = properties;
             config = new DirectoryMonitorConnectorConfig(configProperties);
-        } catch (ConfigException e) {
-            throw new ConnectException("Couldn't start DirectoryMonitorSourceConnector due to configuration "
-                    + "error", e);
-        }
-
     }
 
     @Override
@@ -43,7 +38,9 @@ public class DirectoryMonitorSourceConnector extends SourceConnector {
 
     @Override
     public List<Map<String, String>> taskConfigs(int maxTasks) {
-
+            if(maxTasks<=0){
+                throw new IllegalArgumentException("maxTasks need to be positive");
+            }
             List<String> directories = config.getList(DirectoryMonitorConnectorConfig.DIRECTORIES);
             int numGroups = Math.min(directories.size(), maxTasks);
             List<List<String>> diretoriesGrouped = ConnectorUtils.groupPartitions(directories, numGroups);
