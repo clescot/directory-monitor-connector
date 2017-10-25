@@ -66,8 +66,8 @@ public class DirectoryMonitorTaskTest {
         final HashMap<String, String> map = Maps.newHashMap();
         final File tempDir = Files.createTempDir();
         map.put(DirectoryMonitorTaskConfig.DIRECTORIES,tempDir.getAbsolutePath());
-        map.put(DirectoryMonitorTaskConfig.PATH_MATCHER,"regex:.*\\.txt");
-        map.put(DirectoryMonitorTaskConfig.KINDS,"CMD");
+//        map.put(DirectoryMonitorTaskConfig.PATH_MATCHER,"regex:.*\\.txt");
+//        map.put(DirectoryMonitorTaskConfig.KINDS,"CMD");
         return map;
     }
 
