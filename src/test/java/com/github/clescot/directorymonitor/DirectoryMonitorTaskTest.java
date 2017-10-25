@@ -18,9 +18,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyMapOf;
@@ -80,19 +77,12 @@ public class DirectoryMonitorTaskTest {
             final String path = parameters.get(DirectoryMonitorTaskConfig.DIRECTORIES);
             final Path directoryPath = Paths.get(path);
             task.start(parameters);
-            ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-            scheduler.scheduleAtFixedRate(() -> {
-                try {
-                    System.out.println("creating temp file");
-                    final File tempFile = File.createTempFile("test_", ".txt", directoryPath.toFile());
-                    System.out.println("temp file created "+tempFile.getAbsolutePath());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }, 1, 2, TimeUnit.SECONDS);
+            FileScheduler.scheduleFileCreation(directoryPath);
             final List<SourceRecord> sourceRecords = task.poll();
             assertThat(sourceRecords.size()).isEqualTo(1);
 
         }
     }
+
+
 }

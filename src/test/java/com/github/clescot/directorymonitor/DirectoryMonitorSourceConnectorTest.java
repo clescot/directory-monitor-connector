@@ -66,7 +66,8 @@ public class DirectoryMonitorSourceConnectorTest {
         public void test_nominal(){
             DirectoryMonitorSourceConnector connector= new DirectoryMonitorSourceConnector();
             final HashMap<String, String> properties = Maps.newHashMap();
-            properties.put(DIRECTORIES, Files.createTempDir().getAbsolutePath());
+            final String directoryAbsolutePath = Files.createTempDir().getAbsolutePath();
+            properties.put(DIRECTORIES, directoryAbsolutePath);
             connector.start(properties);
             connector.taskConfigs(5);
         }
