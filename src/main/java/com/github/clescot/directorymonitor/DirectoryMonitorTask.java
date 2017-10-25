@@ -1,6 +1,8 @@
 package com.github.clescot.directorymonitor;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.source.SourceRecord;
@@ -9,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.*;
 import java.sql.Timestamp;
 import java.util.*;
@@ -26,13 +29,11 @@ public class DirectoryMonitorTask extends SourceTask {
     public static final String DELETE_EVENT = "D";
     public static final String MODIFY_EVENT = "M";
     public static final String ALL_KINDS = "CDM";
+    public static final String DIRECTORY_SEPARATOR = ";";
     private WatchService watchService;
     private AtomicBoolean stop;
-    private WatchKey watchKey;
-    private PathMatcher pathMatcher;
-    private WatchEvent.Kind[] kinds;
+    private Map<WatchKey,DirectoryMonitor> watchKeys = Maps.newHashMap();
     private String topicPrefix;
-    private String directoryPath;
 
     @Override
     public String version() {
@@ -51,14 +52,40 @@ public class DirectoryMonitorTask extends SourceTask {
         try {
             final FileSystem fileSystem = FileSystems.getDefault();
             watchService = fileSystem.newWatchService();
-            directoryPath = config.getString(DIRECTORY);
-            Path path = Paths.get(directoryPath);
-            final String pathMatcherAsString = config.getString(PATH_MATCHER);
-            pathMatcher = fileSystem.getPathMatcher(pathMatcherAsString);
-            String kindsAsString = config.getString(KINDS);
-            kinds = getKinds(kindsAsString);
-            //we get a watchKey for the directory with the watchService
-            watchKey = path.register(watchService, kinds);
+            final List<String> directories = Arrays.asList(config.getString(DIRECTORIES).split(DIRECTORY_SEPARATOR));
+            directories.forEach(directoryPath -> {
+                final List<String> params = Arrays.asList(directoryPath.split(","));
+                if (params.isEmpty()) {
+                    throw new IllegalArgumentException("one argument is needed for the directory path");
+                }
+                String directory = params.get(0);
+                Path path = Paths.get(directory);
+                String pathMatcherAsString = null;
+                PathMatcher pathMatcher;
+                if (params.size() > 1) {
+                    pathMatcherAsString = params.get(1);
+
+                }
+                pathMatcherAsString = MoreObjects.firstNonNull(pathMatcherAsString,"regex:.*");
+                pathMatcher = fileSystem.getPathMatcher(pathMatcherAsString);
+                String kindsAsString =null;
+                        WatchEvent.Kind[] kinds = null;
+                if (params.size() > 2) {
+                    kindsAsString = params.get(2);
+                }
+                kindsAsString = MoreObjects.firstNonNull(kindsAsString,"CMD");
+                kinds = getKinds(kindsAsString);
+                WatchKey watchKey;
+                //we get a watchKey for the directory with the watchService
+                try {
+                    watchKey = path.register(watchService, kinds);
+                    final DirectoryMonitor directoryMonitor = new DirectoryMonitor(path,pathMatcher, kinds);
+                    watchKeys.put(watchKey,directoryMonitor);
+                } catch (IOException e) {
+                    throw new ConnectException(e);
+                }
+            });
+
         } catch (IOException e) {
             throw new ConnectException("watchService cannot be created", e);
         }
@@ -88,18 +115,16 @@ public class DirectoryMonitorTask extends SourceTask {
 
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
-
-        return getSourceRecords(watchService, pathMatcher, kinds, stop);
+        return getSourceRecords(watchService,stop);
     }
 
-    protected List<SourceRecord> getSourceRecords(WatchService watchService, PathMatcher pathMatcher, WatchEvent.Kind[] kinds, AtomicBoolean stop) {
+    protected List<SourceRecord> getSourceRecords(WatchService watchService,AtomicBoolean stop) {
         List<SourceRecord> records = Lists.newArrayList();
 
         while (!stop.get()) {
             WatchKey key;
             try {
                 // wait for a key to be available
-                logger.debug("waiting for a key to be available for directory {}", directoryPath);
                 key = watchService.take();
             } catch (InterruptedException ex) {
                 return records;
@@ -116,8 +141,9 @@ public class DirectoryMonitorTask extends SourceTask {
                 if (kind == OVERFLOW) {
                     continue;
                 }
-                if (isWatched(pathMatcher, kinds, ev)) {
-                    records.add(extractSourceRecord(ev));
+                final DirectoryMonitor directoryMonitor = watchKeys.get(key);
+                if (isWatched(directoryMonitor.getPathMatcher(), directoryMonitor.getKinds(), ev)) {
+                    records.add(extractSourceRecord(directoryMonitor.getDirectoryPath(),ev));
                 }
                 logger.debug(kind.name() + ": " + path);
 
@@ -125,11 +151,11 @@ public class DirectoryMonitorTask extends SourceTask {
 
             // IMPORTANT: The key must be reset after processed
             boolean valid = key.reset();
-            if (!valid) {
+//            if (!valid) {
                 break;
-            }
+//            }
         }
-        return null;
+        return records;
     }
 
     private Timestamp getLastRecordedOffset(Map<String, Object> partition) {
@@ -141,13 +167,18 @@ public class DirectoryMonitorTask extends SourceTask {
         return lastRecordedOffset;
     }
 
-    protected SourceRecord extractSourceRecord(WatchEvent<Path> event) {
+    protected SourceRecord extractSourceRecord(Path directoryPath,WatchEvent<Path> event) {
         final String uri = event.context().toUri().toString();
         Map<String, ?> sourcePartition = Collections.singletonMap(FILE, uri);
         final long lastModified = event.context().toFile().lastModified();
         final long mySourceOffset = lastModified != 0 ? lastModified : System.currentTimeMillis();
         Map<String, ?> sourceOffset = Collections.singletonMap(POSITION, mySourceOffset);
-        String topic = topicPrefix + directoryPath;
+        String topic = null;
+        try {
+            topic = topicPrefix + directoryPath.toUri().toURL().toString();
+        } catch (MalformedURLException e) {
+            throw new ConnectException(e);
+        }
         Object value = uri + ";;" + event.kind().name() + ";;" + mySourceOffset;
         return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, value);
     }
@@ -175,6 +206,6 @@ public class DirectoryMonitorTask extends SourceTask {
         if (stop != null) {
             stop.set(true);
         }
-        watchKey.cancel();
+        watchKeys.keySet().forEach(watchKey -> watchKey.cancel());
     }
 }

@@ -49,7 +49,7 @@ public class DirectoryMonitorTaskTest {
             DirectoryMonitorTask task = getTask();
             final HashMap<String, String> map = Maps.newHashMap();
             final File tempDir = Files.createTempDir();
-            map.put(DirectoryMonitorTaskConfig.DIRECTORY,tempDir.getAbsolutePath());
+            map.put(DirectoryMonitorTaskConfig.DIRECTORIES,tempDir.getAbsolutePath());
             task.start(map);
         }
 
@@ -65,7 +65,7 @@ public class DirectoryMonitorTaskTest {
     private static Map<String, String> getNominalParameters() {
         final HashMap<String, String> map = Maps.newHashMap();
         final File tempDir = Files.createTempDir();
-        map.put(DirectoryMonitorTaskConfig.DIRECTORY,tempDir.getAbsolutePath());
+        map.put(DirectoryMonitorTaskConfig.DIRECTORIES,tempDir.getAbsolutePath());
         map.put(DirectoryMonitorTaskConfig.PATH_MATCHER,"regex:.*\\.txt");
         map.put(DirectoryMonitorTaskConfig.KINDS,"CMD");
         return map;
@@ -86,7 +86,7 @@ public class DirectoryMonitorTaskTest {
         public void test_nominal_case() throws InterruptedException, IOException {
             final DirectoryMonitorTask task = getTask();
             final Map<String, String> parameters = getNominalParameters();
-            final String path = parameters.get(DirectoryMonitorTaskConfig.DIRECTORY);
+            final String path = parameters.get(DirectoryMonitorTaskConfig.DIRECTORIES);
             final Path directoryPath = Paths.get(path);
             task.start(parameters);
             ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);

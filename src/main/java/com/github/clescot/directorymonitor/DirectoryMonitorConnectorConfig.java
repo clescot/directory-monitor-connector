@@ -6,8 +6,8 @@ import org.apache.kafka.common.config.ConfigDef;
 import java.util.Map;
 
 public class DirectoryMonitorConnectorConfig extends AbstractConfig {
-    public static final String PATTERNS = "patterns";
-    public static final String PATTERNS_DOC = "patterns";
+    public static final String DIRECTORIES = "directories";
+    public static final String DIRECTORIES_DOC = "directories_doc";
 
     public static final ConfigDef CONFIG_DEF = baseConfigDef();
 
@@ -20,7 +20,7 @@ public class DirectoryMonitorConnectorConfig extends AbstractConfig {
     public static ConfigDef baseConfigDef() {
         ConfigDef config = new ConfigDef();
         return config//
-                .define(PATTERNS, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH,PATTERNS_DOC);
+                .define(DIRECTORIES, ConfigDef.Type.LIST, ConfigDef.Importance.HIGH, DIRECTORIES_DOC);
     }
 
 }
