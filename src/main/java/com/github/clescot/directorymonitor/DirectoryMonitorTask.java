@@ -66,7 +66,7 @@ public class DirectoryMonitorTask extends SourceTask {
                     pathMatcherAsString = params.get(1);
 
                 }
-                pathMatcherAsString = MoreObjects.firstNonNull(pathMatcherAsString,"regex:.*");
+                pathMatcherAsString = pathMatcherAsString!=null?"regex:"+pathMatcherAsString:"regex:.*";
                 pathMatcher = fileSystem.getPathMatcher(pathMatcherAsString);
                 String kindsAsString =null;
                         WatchEvent.Kind[] kinds = null;

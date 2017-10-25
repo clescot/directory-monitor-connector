@@ -44,14 +44,7 @@ public class DirectoryMonitorTaskTest {
             task.start(Maps.newHashMap());
         }
 
-        @Test(expected = ConfigException.class)
-        public void test_with_directory() {
-            DirectoryMonitorTask task = getTask();
-            final HashMap<String, String> map = Maps.newHashMap();
-            final File tempDir = Files.createTempDir();
-            map.put(DirectoryMonitorTaskConfig.DIRECTORIES,tempDir.getAbsolutePath());
-            task.start(map);
-        }
+
 
         @Test
         public void test_nominal_case() {

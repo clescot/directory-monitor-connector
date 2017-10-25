@@ -22,7 +22,7 @@ public class DirectoryMonitorTaskConfig extends AbstractConfig {
     private static ConfigDef baseConfigDef(){
         ConfigDef config = new ConfigDef();
         config.define(DIRECTORIES,
-                ConfigDef.Type.LIST,
+                ConfigDef.Type.STRING,
                 ConfigDef.Importance.HIGH,
                 DIRECTORY_DOC);
         return config;
