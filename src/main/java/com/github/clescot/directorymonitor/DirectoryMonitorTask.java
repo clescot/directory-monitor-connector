@@ -206,6 +206,6 @@ public class DirectoryMonitorTask extends SourceTask {
         if (stop != null) {
             stop.set(true);
         }
-        watchKeys.keySet().forEach(watchKey -> watchKey.cancel());
+        watchKeys.keySet().forEach(WatchKey::cancel);
     }
 }
