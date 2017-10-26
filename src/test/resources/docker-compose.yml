@@ -58,7 +58,8 @@ services:
                SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8081"
                SCHEMA_REGISTRY_DEBUG: "true"
                SCHEMA_REGISTRY_MASTER_ELIGIBILITY: "true"
-               SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: "3"
+               SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: "1"
+
            networks:
              net:
                aliases:
@@ -84,13 +85,81 @@ services:
        KAFKA_BROKER_ID: "1"
        KAFKA_LOG_DIRS: "/kafka/kafka-logs"
        KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092"
-       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://${DOCKER_HOST_ADDRESS}:9092"
+       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://192.168.1.15:9092"
        KAFKA_LOG_CLEANER_ENABLE: "true"
        # 14 jours
        KAFKA_LOG_RETENTION_HOURS: "336"
        KAFKA_JMX_HOSTNAME: "kafka1"
        KAFKA_JMX_PORT: "39999"
        KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE: "false"
+     networks:
+       net:
+
+  kafka2:
+     image: "confluentinc/cp-kafka:3.3.0-1"
+     ports:
+       - "9093:9092"
+
+     environment:
+       KAFKA_ZOOKEEPER_CONNECT: "zookeeper1:2181/hermes"
+       KAFKA_DELETE_TOPIC_ENABLE: "true"
+       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+       KAFKA_BROKER_ID: "1"
+       KAFKA_LOG_DIRS: "/kafka/kafka-logs"
+       KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092"
+       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://192.168.1.15:9093"
+       KAFKA_LOG_CLEANER_ENABLE: "true"
+       # 14 jours
+       KAFKA_LOG_RETENTION_HOURS: "336"
+       KAFKA_JMX_HOSTNAME: "kafka2"
+       KAFKA_JMX_PORT: "39999"
+       KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE: "false"
+     networks:
+       net:
+
+  kafka3:
+     image: "confluentinc/cp-kafka:3.3.0-1"
+     ports:
+       - "9094:9092"
+
+     environment:
+       KAFKA_ZOOKEEPER_CONNECT: "zookeeper1:2181/hermes"
+       KAFKA_DELETE_TOPIC_ENABLE: "true"
+       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+       KAFKA_BROKER_ID: "1"
+       KAFKA_LOG_DIRS: "/kafka/kafka-logs"
+       KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092"
+       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://192.168.1.15:9094"
+       KAFKA_LOG_CLEANER_ENABLE: "true"
+       # 14 jours
+       KAFKA_LOG_RETENTION_HOURS: "336"
+       KAFKA_JMX_HOSTNAME: "kafka1"
+       KAFKA_JMX_PORT: "39999"
+       KAFKA_UNCLEAN_LEADER_ELECTION_ENABLE: "false"
+     networks:
+       net:
+
+
+  kafkaconnect:
+     image: "clescot/kafka-connect-directory:1-SNAPSHOT"
+     ports:
+      - "8083:8083"
+     environment:
+       CONNECT_BOOTSTRAP_SERVERS: "kafka1:9092"
+       CONNECT_REST_PORT: "8083"
+       CONNECT_GROUP_ID: "quickstart-avro"
+       CONNECT_CONFIG_STORAGE_TOPIC: "config"
+       CONNECT_OFFSET_STORAGE_TOPIC: "offsets"
+       CONNECT_STATUS_STORAGE_TOPIC: "status"
+       CONNECT_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+       CONNECT_KEY_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+       CONNECT_VALUE_CONVERTER: "io.confluent.connect.avro.AvroConverter"
+       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: "http://192.168.1.15:8081"
+       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: "http://192.168.1.15:8081"
+       CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+       CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
+       CONNECT_REST_ADVERTISED_HOST_NAME: "localhost"
+       CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: "schema-registry:8081"
      networks:
        net:
 
