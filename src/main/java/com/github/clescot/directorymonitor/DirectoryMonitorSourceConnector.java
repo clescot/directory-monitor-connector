@@ -1,6 +1,6 @@
 package com.github.clescot.directorymonitor;
 
-import com.sun.deploy.util.StringUtils;
+import com.google.common.base.Joiner;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.source.SourceConnector;
@@ -52,7 +52,7 @@ public class DirectoryMonitorSourceConnector extends SourceConnector {
             for (List<String> taskDirectories : diretoriesGrouped) {
                 Map<String, String> taskProps = new HashMap<>(configProperties);
                 taskProps.put(DirectoryMonitorTaskConfig.DIRECTORIES,
-                        StringUtils.join(taskDirectories, DirectoryMonitorTask.DIRECTORY_SEPARATOR));
+                        Joiner.on(DirectoryMonitorTask.DIRECTORY_SEPARATOR).join(taskDirectories));
                 taskConfigs.add(taskProps);
             }
             return taskConfigs;
