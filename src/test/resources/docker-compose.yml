@@ -16,6 +16,9 @@ services:
          ZOOKEEPER_SERVERS: "0.0.0.0:2888:3888;zookeeper2:2888:3888;zookeeper3:2888:3888"
        networks:
          net:
+          aliases:
+            - zookeeper1
+
   zookeeper2:
        image: "confluentinc/cp-zookeeper:3.3.0-1"
        ports:
@@ -31,6 +34,9 @@ services:
          ZOOKEEPER_SERVERS: "zookeeper1:2888:3888;0.0.0.0:2888:3888;zookeeper3:2888:3888"
        networks:
          net:
+          aliases:
+            - zookeeper2
+
   zookeeper3:
        image: "confluentinc/cp-zookeeper:3.3.0-1"
        ports:
@@ -46,37 +52,36 @@ services:
          ZOOKEEPER_SERVERS: "zookeeper1:2888:3888;zookeeper2:2888:3888;0.0.0.0:2888:3888"
        networks:
          net:
+          aliases:
+            - zookeeper3
 
-  schema-registry:
-           image: "confluentinc/cp-schema-registry:3.3.0-1"
-           ports:
-               - "8081:8081"
-           environment:
-               SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper1:2181/hermes"
-               SCHEMA_REGISTRY_KAFKASTORE_TOPIC: "_schemas"
-               SCHEMA_REGISTRY_HOST_NAME: "schema-registry"
-               SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8081"
-               SCHEMA_REGISTRY_DEBUG: "true"
-               SCHEMA_REGISTRY_MASTER_ELIGIBILITY: "true"
-               SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: "1"
-
-           networks:
-             net:
-               aliases:
-                 - "schema-registry"
-           healthcheck:
-             test: ["CMD", "curl", "-f", "http://localhost:8081"]
-             interval: 1m30s
-             timeout: 10s
-             retries: 3
-
+#  schema-registry:
+#           image: "confluentinc/cp-schema-registry:3.3.0-1"
+#           ports:
+#               - "8081:8081"
+#           environment:
+#               SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper1:2181/hermes"
+#               SCHEMA_REGISTRY_KAFKASTORE_TOPIC: "_schemas"
+#               SCHEMA_REGISTRY_HOST_NAME: "schema-registry"
+#               SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8081"
+#               SCHEMA_REGISTRY_DEBUG: "true"
+#               SCHEMA_REGISTRY_MASTER_ELIGIBILITY: "true"
+#               SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: "1"
+#
+#           networks:
+#             net:
+#               aliases:
+#                 - "schema-registry"
+#           healthcheck:
+#             test: ["CMD", "curl", "-f", "http://localhost:8081"]
+#             interval: 1m30s
+#             timeout: 10s
+#             retries: 3
+#
   kafka1:
      image: "confluentinc/cp-kafka:3.3.0-1"
      ports:
-       - target: 9092
-         published: 9092
-         protocol: tcp
-         mode: ingress
+       - "9092:9092"
 
      environment:
        KAFKA_ZOOKEEPER_CONNECT: "zookeeper1:2181/hermes"
@@ -104,7 +109,7 @@ services:
        KAFKA_ZOOKEEPER_CONNECT: "zookeeper1:2181/hermes"
        KAFKA_DELETE_TOPIC_ENABLE: "true"
        KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-       KAFKA_BROKER_ID: "1"
+       KAFKA_BROKER_ID: "2"
        KAFKA_LOG_DIRS: "/kafka/kafka-logs"
        KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092"
        KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://192.168.1.15:9093"
@@ -126,7 +131,7 @@ services:
        KAFKA_ZOOKEEPER_CONNECT: "zookeeper1:2181/hermes"
        KAFKA_DELETE_TOPIC_ENABLE: "true"
        KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-       KAFKA_BROKER_ID: "1"
+       KAFKA_BROKER_ID: "3"
        KAFKA_LOG_DIRS: "/kafka/kafka-logs"
        KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092"
        KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://192.168.1.15:9094"
@@ -145,7 +150,7 @@ services:
      ports:
       - "8083:8083"
      environment:
-       CONNECT_BOOTSTRAP_SERVERS: "kafka1:9092"
+       CONNECT_BOOTSTRAP_SERVERS: "kafka1:9092,kafka2:9092,kafka3:9092"
        CONNECT_REST_PORT: "8083"
        CONNECT_GROUP_ID: "quickstart-avro"
        CONNECT_CONFIG_STORAGE_TOPIC: "config"
