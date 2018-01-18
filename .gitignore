@@ -14,3 +14,6 @@ buildNumber.properties
 !/.mvn/wrapper/maven-wrapper.jar
 
 /*.iml
+/directory-monitor-connector.iml
+Supprimerait .idea/workspace.xml
+Supprimerait src/main/resources/
