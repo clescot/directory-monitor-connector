@@ -15,5 +15,3 @@ buildNumber.properties
 
 /*.iml
 /directory-monitor-connector.iml
-Supprimerait .idea/workspace.xml
-Supprimerait src/main/resources/
