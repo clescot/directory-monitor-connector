@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   zookeeper1:
-       image: "confluentinc/cp-zookeeper:3.3.0-1"
+       image: "confluentinc/cp-zookeeper:4.0.0"
        ports:
          - "2181/tcp"
          - "2888/tcp"
@@ -20,7 +20,7 @@ services:
             - zookeeper1
 
   zookeeper2:
-       image: "confluentinc/cp-zookeeper:3.3.0-1"
+       image: "confluentinc/cp-zookeeper:4.0.0"
        ports:
          - "2181/tcp"
          - "2888/tcp"
@@ -38,7 +38,7 @@ services:
             - zookeeper2
 
   zookeeper3:
-       image: "confluentinc/cp-zookeeper:3.3.0-1"
+       image: "confluentinc/cp-zookeeper:4.0.0"
        ports:
          - "2181/tcp"
          - "2888/tcp"
@@ -56,7 +56,7 @@ services:
             - zookeeper3
 
 #  schema-registry:
-#           image: "confluentinc/cp-schema-registry:3.3.0-1"
+#           image: "confluentinc/cp-schema-registry:4.0.0"
 #           ports:
 #               - "8081:8081"
 #           environment:
@@ -79,7 +79,7 @@ services:
 #             retries: 3
 #
   kafka1:
-     image: "confluentinc/cp-kafka:3.3.0-1"
+     image: "confluentinc/cp-kafka:4.0.0"
      ports:
        - "9092:9092"
 
@@ -101,7 +101,7 @@ services:
        net:
 
   kafka2:
-     image: "confluentinc/cp-kafka:3.3.0-1"
+     image: "confluentinc/cp-kafka:4.0.0"
      ports:
        - "9093:9092"
 
@@ -123,7 +123,7 @@ services:
        net:
 
   kafka3:
-     image: "confluentinc/cp-kafka:3.3.0-1"
+     image: "confluentinc/cp-kafka:4.0.0"
      ports:
        - "9094:9092"
 
