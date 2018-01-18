@@ -40,6 +40,11 @@ public class DirectoryMonitorTask extends SourceTask {
         return null;
     }
 
+    /**
+     * create a new {@link WatchService}, and register with it for each directory watched, a watch key.
+     * Each watch key is linked with a {@link DirectoryMonitor} which host the watch configuration.
+     * @param map
+     */
     @Override
     public void start(Map<String, String> map) {
         if (context == null) {
@@ -69,12 +74,11 @@ public class DirectoryMonitorTask extends SourceTask {
                 pathMatcherAsString = pathMatcherAsString!=null?"regex:"+pathMatcherAsString:"regex:.*";
                 pathMatcher = fileSystem.getPathMatcher(pathMatcherAsString);
                 String kindsAsString =null;
-                        WatchEvent.Kind[] kinds = null;
                 if (params.size() > 2) {
                     kindsAsString = params.get(2);
                 }
                 kindsAsString = MoreObjects.firstNonNull(kindsAsString,"CMD");
-                kinds = getKinds(kindsAsString);
+                WatchEvent.Kind[] kinds = getKinds(kindsAsString);
                 WatchKey watchKey;
                 //we get a watchKey for the directory with the watchService
                 try {
@@ -113,6 +117,11 @@ public class DirectoryMonitorTask extends SourceTask {
         return list.toArray(new WatchEvent.Kind[list.size()]);
     }
 
+    /**
+     *
+     * @return
+     * @throws InterruptedException
+     */
     @Override
     public List<SourceRecord> poll() throws InterruptedException {
         return getSourceRecords(watchService,stop);
@@ -136,14 +145,14 @@ public class DirectoryMonitorTask extends SourceTask {
 
                 // get file name
                 @SuppressWarnings("unchecked")
-                WatchEvent<Path> ev = (WatchEvent<Path>) event;
-                Path path = ev.context();
+                WatchEvent<Path> watchEvent = (WatchEvent<Path>) event;
+                Path path = watchEvent.context();
                 if (kind == OVERFLOW) {
                     continue;
                 }
                 final DirectoryMonitor directoryMonitor = watchKeys.get(key);
-                if (isWatched(directoryMonitor.getPathMatcher(), directoryMonitor.getKinds(), ev)) {
-                    records.add(extractSourceRecord(directoryMonitor.getDirectoryPath(),ev));
+                if (isWatched(directoryMonitor.getPathMatcher(), directoryMonitor.getKinds(), watchEvent)) {
+                    records.add(extractSourceRecord(directoryMonitor.getDirectoryPath(),watchEvent));
                 }
                 logger.debug(kind.name() + ": " + path);
 
@@ -173,7 +182,7 @@ public class DirectoryMonitorTask extends SourceTask {
         final long lastModified = event.context().toFile().lastModified();
         final long mySourceOffset = lastModified != 0 ? lastModified : System.currentTimeMillis();
         Map<String, ?> sourceOffset = Collections.singletonMap(POSITION, mySourceOffset);
-        String topic = null;
+        String topic;
         try {
             topic = topicPrefix + directoryPath.toUri().toURL().toString();
         } catch (MalformedURLException e) {
@@ -186,7 +195,7 @@ public class DirectoryMonitorTask extends SourceTask {
     protected boolean isWatched(PathMatcher pathMatcher, WatchEvent.Kind<Path>[] kindsWanted, WatchEvent<Path> event) {
         final Path context = event.context();
         final WatchEvent.Kind<Path> kind = event.kind();
-//        final int count = event.count();
+        final int count = event.count();
         final long lastModified = context.toFile().lastModified();
 
         if (!pathMatcher.matches(context)) {
