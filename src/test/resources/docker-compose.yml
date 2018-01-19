@@ -55,29 +55,29 @@ services:
           aliases:
             - zookeeper3
 
-#  schema-registry:
-#           image: "confluentinc/cp-schema-registry:4.0.0"
-#           ports:
-#               - "8081:8081"
-#           environment:
-#               SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper1:2181/hermes"
-#               SCHEMA_REGISTRY_KAFKASTORE_TOPIC: "_schemas"
-#               SCHEMA_REGISTRY_HOST_NAME: "schema-registry"
-#               SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8081"
-#               SCHEMA_REGISTRY_DEBUG: "true"
-#               SCHEMA_REGISTRY_MASTER_ELIGIBILITY: "true"
-#               SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: "1"
-#
-#           networks:
-#             net:
-#               aliases:
-#                 - "schema-registry"
-#           healthcheck:
-#             test: ["CMD", "curl", "-f", "http://localhost:8081"]
-#             interval: 1m30s
-#             timeout: 10s
-#             retries: 3
-#
+  schema-registry:
+           image: "confluentinc/cp-schema-registry:4.0.0"
+           ports:
+               - "8081:8081"
+           environment:
+               SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: "zookeeper1:2181/hermes"
+               SCHEMA_REGISTRY_KAFKASTORE_TOPIC: "_schemas"
+               SCHEMA_REGISTRY_HOST_NAME: "schema-registry"
+               SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8081"
+               SCHEMA_REGISTRY_DEBUG: "true"
+               SCHEMA_REGISTRY_MASTER_ELIGIBILITY: "true"
+               SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR: "1"
+
+           networks:
+             net:
+               aliases:
+                 - "schema-registry"
+           healthcheck:
+             test: ["CMD", "curl", "-f", "http://localhost:8081"]
+             interval: 1m30s
+             timeout: 10s
+             retries: 3
+
   kafka1:
      image: "confluentinc/cp-kafka:4.0.0"
      ports:
@@ -90,7 +90,7 @@ services:
        KAFKA_BROKER_ID: "1"
        KAFKA_LOG_DIRS: "/kafka/kafka-logs"
        KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092"
-       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://192.168.1.15:9092"
+       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://${DOCKER_HOST_ADDRESS}:9092"
        KAFKA_LOG_CLEANER_ENABLE: "true"
        # 14 jours
        KAFKA_LOG_RETENTION_HOURS: "336"
@@ -112,7 +112,7 @@ services:
        KAFKA_BROKER_ID: "2"
        KAFKA_LOG_DIRS: "/kafka/kafka-logs"
        KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092"
-       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://192.168.1.15:9093"
+       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://${DOCKER_HOST_ADDRESS}:9093"
        KAFKA_LOG_CLEANER_ENABLE: "true"
        # 14 jours
        KAFKA_LOG_RETENTION_HOURS: "336"
@@ -134,7 +134,7 @@ services:
        KAFKA_BROKER_ID: "3"
        KAFKA_LOG_DIRS: "/kafka/kafka-logs"
        KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092"
-       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://192.168.1.15:9094"
+       KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://${DOCKER_HOST_ADDRESS}:9094"
        KAFKA_LOG_CLEANER_ENABLE: "true"
        # 14 jours
        KAFKA_LOG_RETENTION_HOURS: "336"
@@ -159,8 +159,8 @@ services:
        CONNECT_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
        CONNECT_KEY_CONVERTER: "io.confluent.connect.avro.AvroConverter"
        CONNECT_VALUE_CONVERTER: "io.confluent.connect.avro.AvroConverter"
-       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: "http://192.168.1.15:8081"
-       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: "http://192.168.1.15:8081"
+       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: "http://${DOCKER_HOST_ADDRESS}:8081"
+       CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: "http://${DOCKER_HOST_ADDRESS}:8081"
        CONNECT_INTERNAL_KEY_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
        CONNECT_INTERNAL_VALUE_CONVERTER: "org.apache.kafka.connect.json.JsonConverter"
        CONNECT_REST_ADVERTISED_HOST_NAME: "localhost"
