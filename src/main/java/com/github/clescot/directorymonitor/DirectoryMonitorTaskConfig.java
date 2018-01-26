@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class DirectoryMonitorTaskConfig extends AbstractConfig {
-    public static final String DIRECTORIES = "directory";
+    public static final String DIRECTORIES = "directories";
     public static final String DIRECTORY_DOC = "directory path to watch";
     public static final String POSITION = "position";
     public static final String FILE = "file";
