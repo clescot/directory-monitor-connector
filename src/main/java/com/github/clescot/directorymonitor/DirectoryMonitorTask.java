@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.nio.file.*;
 import java.sql.Timestamp;
 import java.util.*;
@@ -33,8 +32,7 @@ public class DirectoryMonitorTask extends SourceTask {
     private WatchService watchService;
     private AtomicBoolean stop;
     private Map<WatchKey,DirectoryMonitor> watchKeys = Maps.newHashMap();
-    private String topicPrefix;
-
+    private String topic;
     @Override
     public String version() {
         return null;
@@ -50,8 +48,11 @@ public class DirectoryMonitorTask extends SourceTask {
         if (context == null) {
             throw new IllegalStateException("sourceTaskContext is null");
         }
+        topic = map.get(TOPIC);
+        if (topic == null) {
+            throw new IllegalStateException("topic is null");
+        }
         DirectoryMonitorTaskConfig config = new DirectoryMonitorTaskConfig(map);
-        topicPrefix = map.get(PREFIX);
         Map<Map<String, String>, Map<String, Object>> offsets = null;
         List<Map<String, String>> partitions = new ArrayList<>();
         try {
@@ -182,12 +183,6 @@ public class DirectoryMonitorTask extends SourceTask {
         final long lastModified = event.context().toFile().lastModified();
         final long mySourceOffset = lastModified != 0 ? lastModified : System.currentTimeMillis();
         Map<String, ?> sourceOffset = Collections.singletonMap(POSITION, mySourceOffset);
-        String topic;
-        try {
-            topic = topicPrefix + directoryPath.toUri().toURL().toString();
-        } catch (MalformedURLException e) {
-            throw new ConnectException(e);
-        }
         Object value = uri + ";;" + event.kind().name() + ";;" + mySourceOffset;
         return new SourceRecord(sourcePartition, sourceOffset, topic, Schema.STRING_SCHEMA, value);
     }

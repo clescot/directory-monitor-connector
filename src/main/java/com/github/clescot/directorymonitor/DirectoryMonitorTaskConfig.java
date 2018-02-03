@@ -13,8 +13,10 @@ public class DirectoryMonitorTaskConfig extends AbstractConfig {
     public static final String POSITION = "position";
     public static final String FILE = "file";
 
-    public static final String PREFIX = "prefix";
     private static final ConfigDef CONFIG_DEF = baseConfigDef();
+    public static final String TOPIC = "topic";
+    public static final String TOPIC_DOC = "destination topic";
+
     public DirectoryMonitorTaskConfig(Map<?, ?> originals) {
         super(CONFIG_DEF, Optional.ofNullable(originals).orElseThrow(()->new ConnectException("originals is null")));
     }
@@ -24,7 +26,9 @@ public class DirectoryMonitorTaskConfig extends AbstractConfig {
         config.define(DIRECTORIES,
                 ConfigDef.Type.STRING,
                 ConfigDef.Importance.HIGH,
-                DIRECTORY_DOC);
+                DIRECTORY_DOC)
+        .define(TOPIC,ConfigDef.Type.STRING,
+                ConfigDef.Importance.HIGH,TOPIC_DOC);
         return config;
     }
 }
